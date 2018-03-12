@@ -1,41 +1,31 @@
 <?php
 require 'simple_html_dom.php';
-$url = 'http://www.teste.com';
+$url = 'http://www.professorbaruffi.com.br';
 $base = parse_url($url)['host'];
 
-$array_link = array();//vetor temporario onde os links entram e saem conforme sao verificados
 $array_link_totais = array();//vetor com todos os links encontrados
 $saidas = array();//saidas
-
 $ext_exc = array("jpg","png","gif","doc","docx","zip","rar","xls","xlsx","ppt","pptx",'pdf');//vetor com extençoes para dispensar leitura
 
 function busca($url){
-	global $array_link;
+	$array_link = array();
 	global $array_link_totais;
 	global $base;
 	global $ext_exc;
-	$ext_temp = explode(".", $url); //verifica se nao é uma url de download pelo array ext_exc
-
-	if(in_array($ext_temp[count($ext_temp)-1], $ext_exc)){
-		array_shift($array_link);
-		return null;
-	}
 
 	$html = file_get_html( $url ); // abre o html
 	
 	if($html == false){//verifica se retornou direito o html
-		array_shift($array_link);
 		return null;
 	}
 	
 
-	localizar_conteudo($html);//chama a busca do desejo
+	localizar_conteudo($html,$url);//chama a busca do desejo
 
 
 	try{ //procura os links
 		$posts = $html->find('a');
 	}catch(Exception $e){
-		array_shift($array_link);	
 		return null;
 	}
 	
@@ -43,6 +33,15 @@ function busca($url){
 		
 		$url_busca = $post->attr['href'];
 
+		$ext_temp = explode(".", $url_busca); //verifica se nao é uma url de download pelo array ext_exc
+		if(in_array($ext_temp[count($ext_temp)-1], $ext_exc)){
+			continue;
+		}
+
+
+		$temp_url = explode("#", $url_busca);// tirar ancoragem
+		$url_busca = $temp_url[0];
+		
 		if(($url_busca != "")&&($url_busca != "#")){
 			if(substr($url_busca,0,7) != "mailto:"){//buscas para retirada dos links inuteis.
 				$url_busca = concerto_url($url,$url_busca);
@@ -57,9 +56,6 @@ function busca($url){
 		}
 	}
 
-	
-	 
-	 array_shift($array_link);
 	 foreach ($array_link as $links) {
 	 	busca($links);
 	 }
@@ -84,12 +80,12 @@ function concerto_url($url,$l){ // a url da rodada e os links encontradaos na ur
 	return $l;
 }
 
-function localizar_conteudo($html){// aqui vem a busca de informações do conteudo.
+function localizar_conteudo($html,$url){// aqui vem a busca de informações do conteudo.
 	global $saidas;
 	//aqui vc coloca a busca que vai ser feita realmente na pagina
 	$titles = $html->find('h1[class=entry-title]');
 	foreach( $titles as $title ){
-		$saidas[] = $title->innertext;
+		$saidas[] = $title->innertext . " >> " . $url;
 	}
 	//fecha busca//a busca pelo conteudo real
 }
@@ -97,7 +93,6 @@ function localizar_conteudo($html){// aqui vem a busca de informações do conte
 
 $antes = date("Y-m-d H:i:s");
 
-$array_link[] = $url;
 $array_link_totais[] = $url;
 busca($url);
 
@@ -107,4 +102,4 @@ print_r($saidas);//coisas encontradas.
 //tempo de execução.
 $depois = date("Y-m-d H:i:s");
 print("\n\n");
-echo $antes . "  " . $depois;
+print("Antes:".$antes . "  Depois:" . $depois);
