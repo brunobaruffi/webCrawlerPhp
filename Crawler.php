@@ -1,11 +1,24 @@
 <?php
 require 'simple_html_dom.php';
-$url = 'http://www.professorbaruffi.com.br';
+$url = 'https://www.teste.com.br/';
 $base = parse_url($url)['host'];
 
 $array_link_totais = array();//vetor com todos os links encontrados
 $saidas = array();//saidas
 $ext_exc = array("jpg","png","gif","doc","docx","zip","rar","xls","xlsx","ppt","pptx",'pdf');//vetor com extençoes para dispensar leitura
+
+//modificação para que o try-catch pegue as notificações.
+set_error_handler('exceptions_error_handler');
+function exceptions_error_handler($severity, $message, $filename, $lineno) {
+  if (error_reporting() == 0) {
+    return;
+  }
+  if (error_reporting() & $severity) {
+    throw new ErrorException($message, 0, $severity, $filename, $lineno);
+  }
+}
+
+
 
 function busca($url){
 	$array_link = array();
@@ -30,9 +43,12 @@ function busca($url){
 	}
 	
 	foreach( $posts as $post ){//toda todos os links
-		
-		$url_busca = $post->attr['href'];
-
+		//print ($url_busca . " >>");
+		try{	
+			$url_busca = $post->attr['href'];
+		}catch(Exception $e){
+			continue;
+		}
 		$ext_temp = explode(".", $url_busca); //verifica se nao é uma url de download pelo array ext_exc
 		if(in_array($ext_temp[count($ext_temp)-1], $ext_exc)){
 			continue;
@@ -83,10 +99,15 @@ function concerto_url($url,$l){ // a url da rodada e os links encontradaos na ur
 function localizar_conteudo($html,$url){// aqui vem a busca de informações do conteudo.
 	global $saidas;
 	//aqui vc coloca a busca que vai ser feita realmente na pagina
-	$titles = $html->find('h1[class=entry-title]');
-	foreach( $titles as $title ){
-		$saidas[] = $title->innertext . " >> " . $url;
+	//aqui voce pode especificar quandos parametros de busca quizer seguindo este modelo.	
+	$divs = $html->find('h1[single-post-title]');
+	foreach( $divs as $div ){
+		$titles = $div->find('span[class=post-title]');
+		foreach( $titles as $title ){
+			$saidas[] = trim($title->innertext) . " >> " . $url;
+		}	
 	}
+	
 	//fecha busca//a busca pelo conteudo real
 }
 
@@ -103,3 +124,4 @@ print_r($saidas);//coisas encontradas.
 $depois = date("Y-m-d H:i:s");
 print("\n\n");
 print("Antes:".$antes . "  Depois:" . $depois);
+print("\n\n");
