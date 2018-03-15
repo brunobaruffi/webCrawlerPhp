@@ -5,6 +5,7 @@ $base = parse_url($url)['host'];
 
 $array_link_totais = array();//vetor com todos os links encontrados
 $saidas = array();//saidas
+$saida_url = array();//saida url
 $ext_exc = array("jpg","png","gif","doc","docx","zip","rar","xls","xlsx","ppt","pptx",'pdf');//vetor com extençoes para dispensar leitura
 
 //modificação para que o try-catch pegue as notificações.
@@ -25,9 +26,13 @@ function busca($url){
 	global $array_link_totais;
 	global $base;
 	global $ext_exc;
-
-	$html = file_get_html( $url ); // abre o html
 	
+	try{//se for 404 tenque anular.
+		$html = file_get_html( $url ); // abre o html
+	}catch(Exception $e){
+		return null;
+	}
+
 	if($html == false){//verifica se retornou direito o html
 		return null;
 	}
@@ -100,11 +105,16 @@ function localizar_conteudo($html,$url){// aqui vem a busca de informações do 
 	global $saidas;
 	//aqui vc coloca a busca que vai ser feita realmente na pagina
 	//aqui voce pode especificar quandos parametros de busca quizer seguindo este modelo.	
-	$divs = $html->find('h1[single-post-title]');
+	$divs = $html->find('h1[class=single-post-title]');
 	foreach( $divs as $div ){
 		$titles = $div->find('span[class=post-title]');
 		foreach( $titles as $title ){
-			$saidas[] = trim($title->innertext) . " >> " . $url;
+			$temp = trim($title->innertext);
+			if(in_array($temp, $saidas)){
+				$saidas[] = $temp;
+				$saida_url[] = $url;	
+			}
+			
 		}	
 	}
 	
