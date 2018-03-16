@@ -77,7 +77,7 @@ function busca($url){
 		}
 	}
 
-	 foreach ($array_link as $links) {
+	foreach ($array_link as $links) {
 	 	busca($links);
 	 }
 }
@@ -104,21 +104,16 @@ function concerto_url($url,$l){ // a url da rodada e os links encontradaos na ur
 function localizar_conteudo($html,$url){// aqui vem a busca de informações do conteudo.
 	global $saidas;
 	//aqui vc coloca a busca que vai ser feita realmente na pagina
-	//aqui voce pode especificar quandos parametros de busca quizer seguindo este modelo.	
-	$divs = $html->find('h1[class=single-post-title]');
+	//aqui voce pode especificar quandos parametros de busca quizer seguindo este modelo.
+	//Ex: o span deve estar dentro do h1.	
+	$divs = $html->find('h1[class=single-post-title] span[class=post-title]');
 	foreach( $divs as $div ){
-		$titles = $div->find('span[class=post-title]');
-		foreach( $titles as $title ){
-			$temp = trim($title->innertext);
-			if(in_array($temp, $saidas)){
-				$saidas[] = $temp;
-				$saida_url[] = $url;	
-			}
-			
-		}	
+		$temp = trim($div->innertext);
+		if(!in_array($temp, $saidas)){
+			$saidas[] = $temp;
+			$saida_url[] = $url;
+		}
 	}
-	
-	//fecha busca//a busca pelo conteudo real
 }
 
 
